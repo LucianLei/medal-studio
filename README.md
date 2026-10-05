@@ -16,3 +16,5 @@
 运行 npm ci，编辑 src/app.js，运行 npm run build。然后运行 python3 -m http.server 8080 --directory dist。
 
 GitHub Actions 自动将 dist 发布至 GitHub Pages。使用 Three.js 0.180.0（MIT）。
+
+背面铭文：编辑纪念文字和日期时间，点击“查看背面”预览。中文以纹理嵌入 USDZ，保留排版；文字不是可编辑的三维字体几何。日期时间按输入的当地时间显示，留空可隐藏。
