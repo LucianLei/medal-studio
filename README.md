@@ -1,13 +1,18 @@
 # Medal Studio · 运动奖章工坊
 
-单页、无依赖的 Apple Watch 运动奖章风格创作工具。上传 PNG 或纯图形 SVG，自定义圆形、六边形、花瓣、盾牌及四种材质，调整厚度、金属感、粗糙度、图案大小，拖动查看并导出透明 2048 × 2048 PNG。
+在线使用：https://lucianlei.github.io/medal-studio/
 
-图片仅在浏览器内处理。Canvas 2D 模拟奖章的立体厚度与金属光泽；上传图片保留为奖章正面的图案，不进行真实三维网格重建。当前不提供 GLB/STL 导出或 Apple Fitness 导入。
+真实 Three.js 3D 奖章生成器，支持四种造型、四种金属材质、完整旋转视角，以及透明 PNG 和 USDZ 导出。
 
-## 本地运行
+- SVG：纯色填充路径生成有厚度和倒角的实体浮雕，保留图形颜色及孔洞。文字、描边请先转换为填充轮廓。渐变、裁切、蒙版、外部资源和脚本暂不支持，上传时会提示。
+- PNG：透明图片作为奖章正面的贴图，嵌入 USDZ；长边最多使用 2048 像素。
+- USDZ：包含底座、浮雕几何或 PNG 贴图及材质，默认奖章直径约 5 cm。启用 Quick Look 兼容选项；实际 Apple 设备显示效果尚未验证。
+- PNG 导出：2048 × 2048 透明图片。
 
-在项目目录运行 `python3 -m http.server 8080 --directory dist`，访问 `http://localhost:8080`。也可以直接打开 `dist/index.html`。
+图片只在浏览器本地处理。需要支持 WebGL 的现代浏览器。内置 3D 引擎，不依赖运行时外部 CDN。非 Apple 官方产品。
 
-## 部署
+## 开发
 
-`dist` 是完整静态网站，可部署到 GitHub Pages 或其他静态托管服务。Sites 发布配置在 `.openai/hosting.json`。设计交互参考 https://www.emoji3d.org，未使用其代码或图片资源。非 Apple 官方产品。
+运行 npm ci，编辑 src/app.js，运行 npm run build。然后运行 python3 -m http.server 8080 --directory dist。
+
+GitHub Actions 自动将 dist 发布至 GitHub Pages。使用 Three.js 0.180.0（MIT）。
