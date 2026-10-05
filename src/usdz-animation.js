@@ -1,6 +1,6 @@
 import { unzipSync, zipSync, strFromU8, strToU8 } from 'three/addons/libs/fflate.module.js';
 
-// Animate the exported root so the relief, texture and back inscription move together.
+// Keep animation inside the active Apple scene, below its anchoring transform.
 export function animateUSDZ(buffer) {
   const files = unzipSync(new Uint8Array(buffer));
   if (!files['model.usda']) throw new Error('USDZ 缺少主场景');
@@ -12,10 +12,22 @@ export function animateUSDZ(buffer) {
     const y = .045 + .003 * Math.sin(frame / frames * Math.PI * 6);
     translation.push(`${frame}: (0, ${y.toFixed(7)}, 0)`);
   }
-  text = text.replace('defaultPrim = "Root"', `startTimeCode = 0\n\tendTimeCode = ${frames}\n\ttimeCodesPerSecond = ${fps}\n\tframesPerSecond = ${fps}\n\tdefaultPrim = "Root"`);
-  const root = /def Xform "Root"\s*\{/;
-  if (!root.test(text)) throw new Error('USDZ 根节点格式不支持动画');
-  text = text.replace(root, `$&\n\tdouble3 xformOp:translate.timeSamples = {\n\t\t${translation.join(',\n\t\t')}\n\t}\n\tdouble xformOp:rotateY.timeSamples = {\n\t\t${rotation.join(',\n\t\t')}\n\t}\n\tuniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateY"]\n`);
+  text = text.replace('defaultPrim = "Root"', `startTimeCode = 0\n\tendTimeCode = ${frames}\n\ttimeCodesPerSecond = ${fps}\n\tframesPerSecond = ${fps}\n\tautoPlay = true\n\tplaybackMode = "loop"\n\tdefaultPrim = "Root"`);
+  const scene = /def Xform "Scene"\s*\([\s\S]*?\)\s*\{/;
+  const match = scene.exec(text);
+  if (!match) throw new Error('USDZ 缺少可播放的场景');
+  const opening = match.index + match[0].length;
+  let closing = opening, depth = 1;
+  for (; closing < text.length && depth; closing++) {
+    if (text[closing] === '{') depth++;
+    if (text[closing] === '}') depth--;
+  }
+  if (depth) throw new Error('USDZ 场景结构不完整');
+  closing--;
+  // The scene-library container is imported separately by Apple viewers; animate
+  // a child of its active scene rather than the external document root.
+  const track = `\n\t\t\tdef Xform "MedalAnimation"\n\t\t\t{\n\t\t\t\tdouble3 xformOp:translate.timeSamples = {\n${translation.join(',\n')}\n}\n\t\t\t\tfloat xformOp:rotateY.timeSamples = {\n${rotation.join(',\n')}\n}\n\t\t\t\tuniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateY"]\n`;
+  text = text.slice(0, opening) + track + text.slice(opening, closing) + '\n\t\t\t}\n' + text.slice(closing);
   files['model.usda'] = strToU8(text);
   // USDZ requires uncompressed entries and 64-byte aligned file payloads.
   const packed = {};
